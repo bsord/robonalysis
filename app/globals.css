@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --brand: #5b7cfa;
+  --brand-600: #4364f7;
+  --brand-700: #2e4fe8;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+}
+
+/* Tailwind v4 CSS variables already available via global tokens above */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  --surface: #0b0f1a;
+  --surface-2: #0f172a;
+  }
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1250px 750px at 10% -20%, rgba(24, 119, 242, 0.15), transparent 60%),
+    radial-gradient(1000px 650px at 110% 10%, rgba(99, 102, 241, 0.15), transparent 60%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+}
