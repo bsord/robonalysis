@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export type TabKey = "events" | "matches" | "analysis";
+export type TabKey = "events" | "matches" | "skills" | "awards";
 
 type TabsProps = {
   defaultTab?: TabKey;
@@ -20,8 +20,8 @@ export default function Tabs({ defaultTab = "events", active, onChange, tabs }: 
   };
 
   return (
-    <div className="mb-6">
-      <div className="inline-flex items-center rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/60 backdrop-blur shadow p-1">
+    <div className="mb-6 w-full">
+      <div className="flex w-full flex-wrap items-center gap-1 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/60 backdrop-blur shadow p-1">
         {tabs.map((t) => {
           const isActive = current === t.key;
           return (

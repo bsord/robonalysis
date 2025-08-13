@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import type { Team } from "../types";
 
 export default function TeamSearch() {
 	const [teamName, setTeamName] = useState("");
-	const [teamDetails, setTeamDetails] = useState<any>(null);
+	const [teamDetails, setTeamDetails] = useState<Team[] | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 
@@ -23,7 +24,7 @@ export default function TeamSearch() {
 			if (!res.ok) {
 				setError(data.error || "Failed to fetch team details.");
 			} else if (Array.isArray(data.data) && data.data.length > 0) {
-				setTeamDetails(data.data);
+				setTeamDetails(data.data as Team[]);
 			} else {
 				setTeamDetails([]);
 			}
@@ -84,7 +85,7 @@ export default function TeamSearch() {
 			)}
 			{Array.isArray(teamDetails) && teamDetails.length > 0 && (
 				<div className="mt-10 w-full flex flex-col gap-6">
-					{teamDetails.map((team: any, idx: number) => (
+					{teamDetails.map((team, idx: number) => (
 						<div
 							key={team.id || idx}
 							className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/60 backdrop-blur shadow p-6"

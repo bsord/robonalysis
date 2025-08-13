@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Soft rounded border with subtle translucent fill for contrast on dark backgrounds -->
+  <rect x="6" y="6" width="88" height="88" rx="14" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-width="4" />
+  <!-- Accent pins made lighter for visibility -->
+  <circle cx="15" cy="15" r="3" fill="#ffffff" fill-opacity="0.9" />
+  <circle cx="85" cy="85" r="3" fill="#ffffff" fill-opacity="0.9" />
+  <!-- Primary strokes switched to white to stand out -->
+  <path d="M28 20 L50 80 L72 20" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M34 20 L56 80 L78 20" stroke="#e5e7eb" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>

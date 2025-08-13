@@ -1,6 +1,8 @@
+import type { Event } from "../../../types";
+
 type EventsTabProps = {
-  groups: Array<{ key: string; name: string; code: string; events: any[] }>; // grouped by season
-  isCompleted: (ev: any) => boolean;
+  groups: Array<{ key: string; name: string; code: string; events: Event[] }>; // grouped by season
+  isCompleted: (ev: Event) => boolean;
   formatDate: (s?: string) => string;
   isSameDay: (a?: string, b?: string) => boolean;
 };
@@ -12,14 +14,8 @@ export default function EventsTab({ groups, isCompleted, formatDate, isSameDay }
         <div className="space-y-6">
           {groups.map((group) => (
             <div key={group.key}>
-              <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-200">
-                Season: {group.name}
-                {group.code && group.code !== group.name ? (
-                  <span className="ml-2 text-slate-500 dark:text-slate-400">({group.code})</span>
-                ) : null}
-              </h3>
               <ul className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/60 backdrop-blur shadow divide-y">
-                {group.events.map((event: any) => (
+                {group.events.map((event) => (
                   <li key={event.id} className="p-4 sm:p-5">
                     <div className="flex items-start gap-2">
                       <span className="mt-0.5" title={isCompleted(event) ? "Completed" : "Upcoming"}>
@@ -38,15 +34,16 @@ export default function EventsTab({ groups, isCompleted, formatDate, isSameDay }
                       <div className="flex-1">
                         <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                           <span>{event.name}</span>
-                          {event.season && (
-                            <span className="text-xs px-2 py-0.5 rounded-full border border-slate-300/60 dark:border-slate-700/60 text-slate-600 dark:text-slate-300">
-                              {event.season?.code || event.season?.name || "Unknown"}
-                            </span>
-                          )}
                         </div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                        <div className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2 flex-wrap">
                           {formatDate(event.start)}
                           {!isSameDay(event.start, event.end) && event.end ? ` - ${formatDate(event.end)}` : ""}
+                          {typeof event.teamRank === 'number' && (
+                            <span className="ml-1 inline-flex items-center rounded-full bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 text-xs font-medium">
+                              Rank: {event.teamRank}
+                              {event.teamDivision ? ` (${event.teamDivision})` : ''}
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm">{event.location && event.location.venue}</div>
                         <div className="mt-1 text-sm text-slate-700 dark:text-slate-300 flex flex-wrap gap-2">
@@ -55,10 +52,10 @@ export default function EventsTab({ groups, isCompleted, formatDate, isSameDay }
                           <span><span className="font-medium">Ongoing:</span> {event.ongoing ? "Yes" : "No"}</span>
                           <span><span className="font-medium">Awards Finalized:</span> {event.awards_finalized ? "Yes" : "No"}</span>
                         </div>
-                        {Array.isArray(event.divisions) && event.divisions.length > 0 && (
+            {Array.isArray(event.divisions) && event.divisions.length > 0 && (
                           <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                             <span className="font-medium">Divisions:</span>{" "}
-                            {event.divisions.map((d: any) => d?.name).filter(Boolean).join(", ")}
+              {event.divisions.filter(Boolean).map((d) => d?.name).filter(Boolean).join(", ")}
                           </div>
                         )}
                       </div>

@@ -1,5 +1,7 @@
+import type { Team } from "../../../types";
+
 type TeamHeaderProps = {
-  team: any;
+  team: Team;
 };
 
 export default function TeamHeader({ team }: TeamHeaderProps) {

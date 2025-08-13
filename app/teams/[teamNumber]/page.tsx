@@ -1,6 +1,7 @@
 import TeamHeader from "./components/TeamHeader";
 import ClientTabContent from "./TabContent";
 import { headers } from "next/headers";
+import type { Event, SeasonGroup, Team } from "../../types";
 export default async function TeamSummaryPage({
   params,
 }: {
@@ -10,7 +11,7 @@ export default async function TeamSummaryPage({
   const { teamNumber } = await params;
   const teamId = teamNumber; // treat the dynamic route as teamId going forward
 
-  // Build absolute base URL for server-side fetches
+  // Build absolute base URL for server-side fetches (required for Node fetch)
   const hdrs = await headers();
   const host = hdrs.get("host") || "localhost:3000";
   const protocol = hdrs.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
@@ -33,7 +34,7 @@ export default async function TeamSummaryPage({
     cache: "no-store",
   });
   const teamData = await teamRes.json();
-  const team = Array.isArray(teamData?.data) && teamData.data.length > 0 ? teamData.data[0] : null;
+  const team: Team | null = Array.isArray(teamData?.data) && teamData.data.length > 0 ? teamData.data[0] : null;
 
   if (eventsData?.error || !team) {
     return (
@@ -48,34 +49,17 @@ export default async function TeamSummaryPage({
 
   // Date helpers
   const parseDate = (s?: string) => (s ? new Date(s) : null);
-  const formatDate = (s?: string) => {
-    const d = parseDate(s);
-    if (!d || isNaN(d.getTime())) return s ?? "";
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  };
-  const isSameDay = (a?: string, b?: string) => {
-    if (!a || !b) return false;
-    const da = parseDate(a);
-    const db = parseDate(b);
-    if (!da || !db || isNaN(da.getTime()) || isNaN(db.getTime())) return a === b;
-    return (
-      da.getFullYear() === db.getFullYear() &&
-      da.getMonth() === db.getMonth() &&
-      da.getDate() === db.getDate()
-    );
-  };
 
-  const allEvents: any[] = Array.isArray(eventsData?.data) ? eventsData.data : [];
+  const allEvents: Event[] = Array.isArray(eventsData?.data) ? eventsData.data : [];
+  // Derive current season from the first event (API filters to current season by default)
+  // Intentionally omit unused seasonal variables to avoid lint warnings.
 
   // Group by season, with most recent seasons first; events inside each season newest-first
-  const timeOf = (ev: any) => parseDate(ev?.start)?.getTime() ?? 0;
+  const timeOf = (ev: Event) => parseDate(ev?.start)?.getTime() ?? 0;
   const groupBySeason = (
-    events: any[]
-  ): Array<{ key: string; name: string; code: string; events: any[]; sortTime: number }> => {
-    const map = new Map<string, { key: string; name: string; code: string; events: any[]; sortTime: number }>();
+    events: Event[]
+  ): Array<{ key: string; name: string; code: string; events: Event[]; sortTime: number }> => {
+    const map = new Map<string, { key: string; name: string; code: string; events: Event[]; sortTime: number }>();
     for (const ev of events) {
       const id = ev?.season?.id != null ? String(ev.season.id) : undefined;
       const code = ev?.season?.code ?? "";
@@ -95,13 +79,17 @@ export default async function TeamSummaryPage({
     groups.sort((a, b) => b.sortTime - a.sortTime); // most recent seasons first
     return groups;
   };
-  const bySeason = groupBySeason(allEvents).map(({ sortTime, ...rest }) => rest); // strip non-serializable fields
+  const bySeason: SeasonGroup[] = groupBySeason(allEvents).map((g) => ({ key: g.key, name: g.name, code: g.code, events: g.events }));
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
       <TeamHeader team={team} />
-
-  <ClientTabContent teamId={teamId} eventsCount={allEvents.length} bySeason={bySeason as any} />
+      <ClientTabContent
+        teamId={teamId}
+        eventsCount={allEvents.length}
+        bySeason={bySeason}
+        programId={team?.program?.id}
+      />
     </div>
   );
 }

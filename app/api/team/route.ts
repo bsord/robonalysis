@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ data: [raw] });
     }
     return NextResponse.json({ data: [] });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Error fetching team details.' }, { status: 500 });
   }
 }
