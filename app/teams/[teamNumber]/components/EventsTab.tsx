@@ -55,11 +55,19 @@ function GoogleMap({ events }: GoogleMapProps) {
       validEvents.forEach(ev => {
         const coords = ev.location?.coordinates;
         if (coords && typeof coords.lat === "number" && typeof coords.lon === "number") {
-          new window.google.maps.Marker({
+          const marker = new window.google.maps.Marker({
             position: { lat: coords.lat, lng: coords.lon },
             map,
             title: ev.name || "Event",
           });
+          if (ev.name) {
+            const infowindow = new window.google.maps.InfoWindow({
+              content: `<div style='font-size:14px;font-weight:bold;color:black;'>${ev.name}</div>`
+            });
+            marker.addListener("click", () => {
+              infowindow.open(map, marker);
+            });
+          }
         }
       });
     }
@@ -71,7 +79,7 @@ function GoogleMap({ events }: GoogleMapProps) {
 export default function EventsTab({ groups, isCompleted, formatDate, isSameDay }: EventsTabProps) {
   return (
     <section className="w-full max-w-3xl">
-      <div className="flex gap-8">
+      <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
           {groups.length > 0 ? (
             <div className="space-y-6">
@@ -135,7 +143,8 @@ export default function EventsTab({ groups, isCompleted, formatDate, isSameDay }
             </ul>
           )}
         </div>
-        <div className="w-80">
+        {/* Desktop/tablet: map on the side; mobile: map below */}
+        <div className="w-full lg:w-80 order-2 lg:order-none mt-6 lg:mt-0">
           <GoogleMap events={groups.flatMap(g => g.events)} />
         </div>
       </div>
