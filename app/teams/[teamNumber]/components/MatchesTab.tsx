@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState, useEffect, useCallback } from "react";
-import type { Match } from "../../../types";
+import type { Match, Team, Alliance, MatchTeamRef } from "../../../types";
 
 type RankInfo = {
   rank: number | null;
@@ -23,7 +23,7 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupLoading, setPopupLoading] = useState(false);
   const [popupError, setPopupError] = useState<string | null>(null);
-  const [popupData, setPopupData] = useState<any | null>(null);
+  const [popupData, setPopupData] = useState<Team | null>(null);
 
   const closePopup = useCallback(() => {
     setPopupOpen(false);
@@ -48,17 +48,17 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
       setPopupError(null);
       setPopupData(null);
       try {
-        const body: any = popupTeamId ? { teamId: popupTeamId } : { teamName: popupTeamNumber };
+  const body: Record<string, string | number | null> = popupTeamId ? { teamId: popupTeamId } : { teamName: popupTeamNumber };
         const res = await fetch('/api/team', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (cancelled) return;
         if (!res.ok) {
           setPopupError(json?.error || 'Failed to load team info');
         } else {
-          const first = Array.isArray(json?.data) ? json.data[0] : null;
-            setPopupData(first);
+          const first = Array.isArray(json?.data) ? json.data[0] as Team : null;
+          setPopupData(first);
         }
-      } catch (e: any) {
+      } catch {
         if (!cancelled) setPopupError('Network error');
       } finally {
         if (!cancelled) setPopupLoading(false);
@@ -74,10 +74,10 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [popupOpen, closePopup]);
 
-  const renderTeamName = (t: any, primary: boolean) => {
+  const renderTeamName = (t: MatchTeamRef, primary: boolean) => {
     const id = t?.team?.id ?? t?.team_id ?? t?.id ?? null;
-    const numberVal = t?.team?.number ?? t?.number ?? null;
-    const display = t?.team?.name || (numberVal != null ? String(numberVal) : t?.name) || 'Unknown';
+  const numberVal = t?.team?.number ?? t?.team_id ?? t?.id ?? null;
+  const display = t?.team?.name ?? (numberVal != null ? String(numberVal) : undefined) ?? 'Unknown';
     const isCurrent = id != null && String(id) === String(teamId);
     return (
       <button
@@ -90,8 +90,9 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
     );
   };
 
-  const renderAllianceNames = (alliance: any, reorderForTeamId: string | number) => {
-    const teams: any[] = Array.isArray(alliance?.teams) ? alliance.teams.slice() : [];
+  const renderAllianceNames = (alliance: Alliance | undefined, reorderForTeamId: string | number) => {
+    if (!alliance) return null;
+  const teams: MatchTeamRef[] = Array.isArray(alliance?.teams) ? alliance.teams.slice() : [];
     // Reorder so the current page team is first if present
     const idx = teams.findIndex(t => String(t?.team?.id ?? t?.team_id ?? t?.id) === String(reorderForTeamId));
     if (idx > 0) {
@@ -209,16 +210,15 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
   // No dynamic rename; elimination Grand Finals not represented by round code 6 here.
       }
     }
-    const ORDER_FOR_PLACEMENT = ['6','3','4','5'];
     const computePlacement = (g: { rounds: { round: string; matches: Match[]; label: string }[] }) => {
       // Gather matches by round code
       const byRound: Record<string, Match[]> = {};
       for (const r of g.rounds) byRound[r.round] = r.matches;
       const outcomeFor = (m: Match): 'W' | 'L' | 'T' | 'TBD' => {
         const alliances = Array.isArray(m?.alliances) ? m.alliances : [];
-        let our: any = null, opp: any = null;
+  let our: Alliance | null = null, opp: Alliance | null = null;
         for (const a of alliances) {
-          const has = Array.isArray(a?.teams) && a.teams.some(t => String(t?.team?.id ?? (t as any)?.team_id ?? t?.id) === String(teamId));
+          const has = Array.isArray(a?.teams) && a.teams.some(t => String(t?.team?.id ?? t?.team_id ?? t?.id) === String(teamId));
           if (has) our = a; else opp = a; // simplistic (only two alliances expected)
         }
         if (!our || !opp) return 'TBD';
@@ -251,7 +251,7 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
       return 'Participant';
     };
     return Array.from(map.entries()).map(([id, g]) => ({ id, placement: computePlacement(g), ...g }));
-  }, [matches]);
+  }, [matches, teamId]);
 
   // SP removed from the match list for a cleaner UI
 
@@ -377,20 +377,7 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
                             ? 'L'
                             : 'T';
                       // Ensure the primary team appears first in its alliance listing
-                      const primaryIdNum = Number(teamId);
-                      const primaryIdStr = String(teamId);
-                      const reorderNames = (names: string[], ids: Array<string | number>) => {
-                        const idx = ids.findIndex((id) => Number(id) === primaryIdNum || String(id) === primaryIdStr);
-                        if (idx > 0) {
-                          const arr = names.slice();
-                          const [item] = arr.splice(idx, 1);
-                          arr.unshift(item);
-                          return arr;
-                        }
-                        return names;
-                      };
-                      const ourAllianceIds = ourOnRed ? r.teamIds : b.teamIds;
-                      const ourNamesOrdered = reorderNames(ourAlliance.teamNames, ourAllianceIds);
+                      // Removed unused primaryIdNum and primaryIdStr
                       return (
                         <li key={key} className="p-4 sm:p-5 border-y border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/30">
                           <div className="flex flex-col gap-2">
