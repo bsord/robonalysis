@@ -7,6 +7,7 @@ type EventsTabProps = {
 };
 
 import { useEffect, useRef } from "react";
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 import type { Event } from "../../../types";
 
 type GoogleMapProps = {
@@ -24,7 +25,7 @@ function GoogleMap({ events }: GoogleMapProps) {
     if (!window.google && !existingScript) {
       const script = document.createElement("script");
       script.id = scriptId;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCIcdG_V7JZnAbiO2irDqtwupqiL-9Cu34`;
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}`;
       script.async = true;
       script.onload = () => initMap();
       document.body.appendChild(script);
