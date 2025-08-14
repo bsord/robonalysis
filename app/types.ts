@@ -22,7 +22,19 @@ export type Event = {
   event_type?: string | null;
   ongoing?: boolean | null;
   awards_finalized?: boolean | null;
-  location?: { venue?: string | null } | null;
+  location?: {
+    venue?: string | null;
+    address_1?: string;
+    address_2?: string;
+    city?: string;
+    region?: string;
+    postcode?: string;
+    country?: string;
+    coordinates?: {
+      lat?: number;
+      lon?: number;
+    };
+  } | null;
   divisions?: EventDivision[] | null;
   season?: { id?: number | string; code?: string; name?: string } | null;
   // Enriched fields per team
