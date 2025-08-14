@@ -1,4 +1,5 @@
 import type { Match } from "../../../types";
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 "use client";
 import { Bar } from "react-chartjs-2";
 import {
@@ -37,7 +38,7 @@ export default function AverageMarginGraph({ matches, teamId }: { matches: Match
       let own = 0, opp = 0, found = false;
       for (const a of alliances) {
         const teams = Array.isArray(a?.teams) ? a.teams : [];
-        const has = teams.some((t: any) => String(t?.team?.id) === String(teamId));
+  const has = teams.some((t: import("../../../types").MatchTeamRef) => String(t?.team?.id ?? "") === String(teamId));
         if (has) {
           own = typeof a?.score === "number" ? a.score : 0;
           found = true;
@@ -76,7 +77,7 @@ export default function AverageMarginGraph({ matches, teamId }: { matches: Match
               title: { display: false },
               tooltip: {
                 callbacks: {
-                  title: (tooltipItems: any) => {
+                  title: (tooltipItems: import("chart.js").TooltipItem<'bar'>[]) => {
                     const idx = tooltipItems[0]?.dataIndex;
                     return eventNames[idx] || "Event";
                   },
@@ -100,8 +101,8 @@ export default function AverageMarginGraph({ matches, teamId }: { matches: Match
               y: {
                 beginAtZero: true,
                 grid: {
-                  color: (ctx: any) => ctx.tick.value === 0 ? '#6b7280' : 'rgba(100,116,139,0.2)',
-                  lineWidth: (ctx: any) => ctx.tick.value === 0 ? 3 : 1,
+                  color: (ctx: { tick: { value: number } }) => ctx.tick.value === 0 ? '#6b7280' : 'rgba(100,116,139,0.2)',
+                  lineWidth: (ctx: { tick: { value: number } }) => ctx.tick.value === 0 ? 3 : 1,
                 },
               },
             },
