@@ -1,5 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+// GraphDropdown must be outside the main component to use hooks
+import dynamic from "next/dynamic";
+const AverageMarginGraph = dynamic(() => import("./components/AverageMarginGraph"), { ssr: false });
+
 import Tabs, { TabKey } from "./components/Tabs";
 import EventsTab from "./components/EventsTab";
 import MatchesTab from "./components/MatchesTab";
@@ -7,6 +11,33 @@ import SkillsTab from "./components/SkillsTab";
 import AwardsTab from "./components/AwardsTab";
 import SeasonPicker from "./components/SeasonPicker";
 import type { SeasonGroup, Match, SkillRow, Award, Event } from "../../types";
+
+function GraphDropdown({ matches, teamId }: { matches: Match[]; teamId: string }) {
+  const [selected, setSelected] = useState("margin");
+  return (
+    <>
+      <label className="mb-4 w-full max-w-xs">
+        <span className="block text-sm font-medium mb-2">Select Data</span>
+        <select
+          className="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800"
+          value={selected}
+          onChange={e => setSelected(e.target.value)}
+        >
+          <option value="margin">Average Margin</option>
+          <option value="score">High Score</option>
+          <option value="skills">Skills Points</option>
+        </select>
+      </label>
+      <div className="w-full h-96 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700 mt-8">
+        {selected === "margin" ? (
+          <AverageMarginGraph matches={matches} teamId={teamId} />
+        ) : (
+          <span className="text-slate-400 text-xl">[Placeholder Graph]</span>
+        )}
+      </div>
+    </>
+  );
+}
 
 type Props = {
   teamId: string;
@@ -264,6 +295,7 @@ export default function ClientTabContent({ teamId, eventsCount, bySeason, progra
       { key: "skills", label: "Skills", count: Array.isArray(skills) ? skills.length : undefined },
       { key: "awards", label: "Awards", count: Array.isArray(awards) ? awards.length : undefined },
       { key: "events", label: "Events", count: (Array.isArray(events) && events.length) || eventsCount },
+  { key: "graphs", label: "Graphs" },
         ]}
       />
     </div>
@@ -345,6 +377,15 @@ export default function ClientTabContent({ teamId, eventsCount, bySeason, progra
           )
         )}
         
+      {active === "graphs" && (
+        <section className="w-full max-w-3xl">
+          <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/60 backdrop-blur shadow p-6">
+            <h3 className="text-xl font-semibold mb-2">Graphs</h3>
+            <GraphDropdown matches={matches} teamId={teamId} />
+          </div>
+        </section>
+      )}
+
       </div>
     </>
   );

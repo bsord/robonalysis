@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export type TabKey = "events" | "matches" | "skills" | "awards";
+export type TabKey = "events" | "matches" | "skills" | "awards" | "graphs";
 
 type TabsProps = {
   defaultTab?: TabKey;

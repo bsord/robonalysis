@@ -289,7 +289,37 @@ export default function MatchesTab({ teamId, matches, eventRanks }: Props) {
               <div key={g.id} className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/60 backdrop-blur shadow">
                 <div className="p-4 sm:p-5 border-b border-slate-200/60 dark:border-slate-800/60">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 break-words">{g.event?.name || 'Event'}</h3>
+                    <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 break-words">
+                      {g.event?.name || 'Event'}
+                      {(() => {
+                        // Calculate average margin for this event
+                        const allMatches = g.rounds.flatMap(r => r.matches);
+                        let ownTotal = 0, oppTotal = 0, played = 0;
+                        for (const m of allMatches) {
+                          const alliances = Array.isArray(m?.alliances) ? m.alliances : [];
+                          let own = 0, opp = 0, found = false;
+                          for (const a of alliances) {
+                            const teams = Array.isArray(a?.teams) ? a.teams : [];
+                            const has = teams.some(t => String(t?.team?.id) === String(teamId));
+                            if (has) {
+                              own = typeof a?.score === 'number' ? a.score : 0;
+                              found = true;
+                            } else {
+                              const s = typeof a?.score === 'number' ? a.score : 0;
+                              opp = Math.max(opp, s);
+                            }
+                          }
+                          if (!found) continue;
+                          ownTotal += own;
+                          oppTotal += opp;
+                          played++;
+                        }
+                        const avgMargin = played ? ((ownTotal - oppTotal) / played).toFixed(1) : null;
+                        return avgMargin !== null ? (
+                          <span className="ml-2 text-xs font-medium text-slate-500 dark:text-slate-400 bg-indigo-600/10 rounded-full px-2 py-0.5 align-middle">Avg Margin: {avgMargin}</span>
+                        ) : null;
+                      })()}
+                    </h3>
                   </div>
                   <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <span className="text-xs rounded-full px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">{g.rounds.reduce((s,r)=>s + r.matches.length,0)} matches</span>
