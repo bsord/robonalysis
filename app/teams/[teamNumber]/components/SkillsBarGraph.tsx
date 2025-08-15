@@ -1,5 +1,13 @@
 "use client";
-import type { Match } from "../../../types";
+// Minimal local type matching the shape produced by the client grouping logic
+type EventSkills = {
+  eventId: number;
+  eventName?: string | null;
+  total: number;
+  rank?: number | null;
+  driver?: { score: number; attempts?: number } | null;
+  programming?: { score: number; attempts?: number } | null;
+};
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -13,41 +21,12 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
-export default function SeedBarGraph({ matches, eventRanks }: { matches: Match[]; eventRanks: Record<string, { rank: number | null }> }) {
-  // Group matches by event
-  const eventMap: Record<string, { name: string; matches: Match[] }> = {};
-  for (const m of matches) {
-    const eid = String(m?.event?.id ?? "unknown");
-    const name = m?.event?.name || "Event";
-    if (!eventMap[eid]) eventMap[eid] = { name, matches: [] };
-    eventMap[eid].matches.push(m);
-  }
-  const labels: string[] = [];
-  const eventNames: string[] = [];
-  const data: number[] = [];
-  const barColors: string[] = [];
-  let eventIndex = 1;
-  // Helper to interpolate color from green to red
-  function seedToColor(seed: number) {
-    // Clamp seed between 1 and 30
-    const s = Math.max(1, Math.min(seed, 30));
-    // 1 = green, 30 = red
-    // Interpolate from green (0,200,0) to red (200,0,0)
-    const r = Math.round((s - 1) * (200 - 0) / (30 - 1));
-    const g = Math.round(200 - (s - 1) * (200 - 0) / (30 - 1));
-    return `rgb(${r},${g},0)`;
-  }
-  for (const eid in eventMap) {
-    const { name } = eventMap[eid];
-    labels.push(String(eventIndex));
-    eventNames.push(name);
-    eventIndex++;
-    // Get seed from eventRanks
-    const rankObj = eventRanks[eid];
-    const seed = rankObj && typeof rankObj.rank === 'number' ? rankObj.rank : null;
-    data.push(seed ?? 0);
-    barColors.push(seedToColor(seed ?? 50));
-  }
+export default function SkillsBarGraph({ skills }: { skills: EventSkills[] }) {
+  const labels: string[] = skills.map((e, i) => String(i + 1));
+  const eventNames: string[] = skills.map((e) => e.eventName || "Event");
+  const driverData: number[] = skills.map((e) => e.driver?.score ?? 0);
+  const programmingData: number[] = skills.map((e) => e.programming?.score ?? 0);
+
   return (
     <div className="w-full overflow-x-auto" style={{ minWidth: '320px', height: '400px' }}>
       <div style={{ minWidth: 400, height: '100%' }}>
@@ -56,9 +35,14 @@ export default function SeedBarGraph({ matches, eventRanks }: { matches: Match[]
             labels,
             datasets: [
               {
-                label: "Seed Per Event",
-                data,
-                backgroundColor: barColors,
+                label: "Driver Skills",
+                data: driverData,
+                backgroundColor: "#6366f1",
+              },
+              {
+                label: "Programming Skills",
+                data: programmingData,
+                backgroundColor: "#10b981",
               },
             ],
           }}
@@ -66,7 +50,7 @@ export default function SeedBarGraph({ matches, eventRanks }: { matches: Match[]
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { display: false },
+              legend: { display: true },
               title: { display: false },
               tooltip: {
                 callbacks: {
@@ -82,7 +66,7 @@ export default function SeedBarGraph({ matches, eventRanks }: { matches: Match[]
                 font: { weight: 'bold', size: 14 },
                 anchor: 'center',
                 align: 'center',
-                formatter: (value: number) => value,
+                formatter: (value: number) => value.toFixed(1),
               },
             },
             scales: {

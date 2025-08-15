@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 const AverageMarginGraph = dynamic(() => import("./components/AverageMarginGraph"), { ssr: false });
 import SeedBarGraph from "./components/SeedBarGraph";
+import SkillsBarGraph from "./components/SkillsBarGraph";
 
 import Tabs, { TabKey } from "./components/Tabs";
 import EventsTab from "./components/EventsTab";
@@ -13,8 +14,42 @@ import AwardsTab from "./components/AwardsTab";
 import SeasonPicker from "./components/SeasonPicker";
 import type { SeasonGroup, Match, SkillRow, Award, Event } from "../../types";
 
-function GraphDropdown({ matches, teamId, eventRanks }: { matches: Match[]; teamId: string; eventRanks: Record<string, { rank: number | null }> }) {
+// Grouped skills entry used by the client skill grouping logic
+type SkillGroupEntry = {
+  eventId: number;
+  eventName?: string | null;
+  total: number;
+  rank?: number | null;
+  driver?: { score: number; attempts?: number };
+  programming?: { score: number; attempts?: number };
+};
+
+function GraphDropdown({ matches, teamId, eventRanks, skills }: { matches: Match[]; teamId: string; eventRanks: Record<string, { rank: number | null }>, skills: SkillRow[] }) {
   const [selected, setSelected] = useState("margin");
+  // Group skills for SkillsBarGraph
+  const groupedSkills = useMemo(() => {
+    const rows = Array.isArray(skills) ? skills : [];
+    const map = new Map<number, SkillGroupEntry>();
+    for (const s of rows) {
+      const evId = Number(s?.event?.id);
+      if (!Number.isFinite(evId)) continue;
+      const existing = map.get(evId);
+      const entry = existing ?? ({ eventId: evId, eventName: s?.event?.name ?? null, total: 0 } as SkillGroupEntry);
+      if (entry.rank == null && s?.rank != null) entry.rank = Number(s.rank);
+      const score = Number(s?.score ?? 0) || 0;
+      const attempts = s?.attempts != null ? Number(s.attempts) : undefined;
+      if (s?.type === "driver") {
+        if (!entry.driver || score > entry.driver.score) entry.driver = { score, attempts };
+      } else if (s?.type === "programming") {
+        if (!entry.programming || score > entry.programming.score) entry.programming = { score, attempts };
+      }
+      map.set(evId, entry);
+    }
+    return Array.from(map.values()).map((e) => ({
+      ...e,
+      total: (e.driver?.score || 0) + (e.programming?.score || 0),
+    }));
+  }, [skills]);
   return (
     <>
       <label className="mb-4 w-full max-w-xs">
@@ -33,7 +68,9 @@ function GraphDropdown({ matches, teamId, eventRanks }: { matches: Match[]; team
         {selected === "margin" ? (
           <AverageMarginGraph matches={matches} teamId={teamId} />
         ) : selected === "score" ? (
-          <SeedBarGraph matches={matches} teamId={teamId} eventRanks={eventRanks} />
+          <SeedBarGraph matches={matches} eventRanks={eventRanks} />
+        ) : selected === "skills" ? (
+          <SkillsBarGraph skills={groupedSkills} />
         ) : (
           <span className="text-slate-400 text-xl">[Placeholder Graph]</span>
         )}
@@ -384,7 +421,7 @@ export default function ClientTabContent({ teamId, eventsCount, bySeason, progra
         <section className="w-full max-w-3xl">
           <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/60 backdrop-blur shadow p-6">
             <h3 className="text-xl font-semibold mb-2">Graphs</h3>
-            <GraphDropdown matches={matches} teamId={teamId} eventRanks={eventRanks} />
+            <GraphDropdown matches={matches} teamId={teamId} eventRanks={eventRanks} skills={skills} />
           </div>
         </section>
       )}

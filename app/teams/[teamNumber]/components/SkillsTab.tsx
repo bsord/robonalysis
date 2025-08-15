@@ -4,7 +4,7 @@ import type { SkillRow } from "../../../types";
 
 type Props = { skills: SkillRow[] };
 
-type EventSkills = {
+export type EventSkills = {
   eventId: number;
   eventName?: string;
   rank?: number;
