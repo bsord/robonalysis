@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 // GraphDropdown must be outside the main component to use hooks
 import dynamic from "next/dynamic";
 const AverageMarginGraph = dynamic(() => import("./components/AverageMarginGraph"), { ssr: false });
+import SeedBarGraph from "./components/SeedBarGraph";
 
 import Tabs, { TabKey } from "./components/Tabs";
 import EventsTab from "./components/EventsTab";
@@ -12,7 +13,7 @@ import AwardsTab from "./components/AwardsTab";
 import SeasonPicker from "./components/SeasonPicker";
 import type { SeasonGroup, Match, SkillRow, Award, Event } from "../../types";
 
-function GraphDropdown({ matches, teamId }: { matches: Match[]; teamId: string }) {
+function GraphDropdown({ matches, teamId, eventRanks }: { matches: Match[]; teamId: string; eventRanks: Record<string, { rank: number | null }> }) {
   const [selected, setSelected] = useState("margin");
   return (
     <>
@@ -24,13 +25,15 @@ function GraphDropdown({ matches, teamId }: { matches: Match[]; teamId: string }
           onChange={e => setSelected(e.target.value)}
         >
           <option value="margin">Average Margin</option>
-          <option value="score">High Score</option>
+          <option value="score">Placement</option>
           <option value="skills">Skills Points</option>
         </select>
       </label>
       <div className="w-full h-96 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700 mt-8">
         {selected === "margin" ? (
           <AverageMarginGraph matches={matches} teamId={teamId} />
+        ) : selected === "score" ? (
+          <SeedBarGraph matches={matches} teamId={teamId} eventRanks={eventRanks} />
         ) : (
           <span className="text-slate-400 text-xl">[Placeholder Graph]</span>
         )}
@@ -381,7 +384,7 @@ export default function ClientTabContent({ teamId, eventsCount, bySeason, progra
         <section className="w-full max-w-3xl">
           <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/90 dark:bg-slate-900/60 backdrop-blur shadow p-6">
             <h3 className="text-xl font-semibold mb-2">Graphs</h3>
-            <GraphDropdown matches={matches} teamId={teamId} />
+            <GraphDropdown matches={matches} teamId={teamId} eventRanks={eventRanks} />
           </div>
         </section>
       )}
